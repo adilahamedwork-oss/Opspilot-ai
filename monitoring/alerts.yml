@@ -1,0 +1,10 @@
+groups:
+  - name: opspilot-demo-alerts
+    rules:
+      - alert: OpsPilotApiDown
+        expr: up{job="opspilot"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpsPilot API scrape target is down"

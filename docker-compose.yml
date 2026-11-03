@@ -1,0 +1,36 @@
+services:
+  app:
+    build: .
+    container_name: opspilot-app
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - opspilot_data:/data
+    restart: unless-stopped
+  prometheus:
+    image: prom/prometheus:v3.3.0
+    container_name: opspilot-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - app
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: opspilot-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: opspilot-local-change-me
+    depends_on:
+      - prometheus
+
+volumes:
+  opspilot_data:

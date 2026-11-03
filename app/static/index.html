@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpsPilot AI | Incident Command</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#e8edf7;font:15px system-ui, sans-serif}
+main{max-width:1050px;margin:40px auto;padding:0 20px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+h1{font-size:30px;margin:0}.muted{color:#9ba8bf}.pill{border:1px solid #34415c;border-radius:20px;padding:7px 12px;color:#9fe4bd}
+.panel{background:#131c30;border:1px solid #293650;border-radius:14px;padding:20px;margin-top:20px}
+button{background:#8b6cff;color:white;border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer;margin:5px 5px 5px 0}
+button.secondary{background:#263653}textarea,input,select{width:100%;background:#0b1325;border:1px solid #34415c;color:white;padding:11px;border-radius:8px;margin:6px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.result{white-space:pre-wrap;line-height:1.6}.tag{color:#b9a8ff}.error{color:#ff9292}
+</style></head>
+<body><main>
+<div class="top"><div><h1>⚡ OpsPilot AI</h1><div class="muted">Cloud incident investigation command center</div></div><span class="pill" id="health">Checking API…</span></div>
+<section class="panel"><h2>Inject a test incident</h2><p class="muted">Run a controlled scenario and let OpsPilot investigate its evidence.</p>
+<button onclick="demo('database')">Database timeout</button><button onclick="demo('cpu')">CPU saturation</button><button onclick="demo('memory')">Memory / OOM</button></section>
+<section class="panel"><h2>Custom incident</h2><label>Service</label><input id="service" value="payments-api"><label>Severity</label><select id="severity"><option>high</option><option>critical</option><option>medium</option><option>low</option></select>
+<label>Description</label><textarea id="description" rows="2">API latency increased and requests are failing.</textarea>
+<label>Logs (one per line)</label><textarea id="logs" rows="3">ERROR HTTP 500 on /checkout</textarea>
+<label>Metrics (JSON)</label><textarea id="metrics" rows="2">{"cpu_percent": 95, "http_5xx_rate": 10}</textarea>
+<button onclick="custom()">Investigate incident</button></section>
+<section class="panel"><h2>Investigation report</h2><div id="output" class="result muted">No incident investigated yet.</div></section>
+<script>
+async function check(){try{let r=await fetch('/health');let j=await r.json();document.getElementById('health').textContent='● API '+j.status}catch(e){document.getElementById('health').textContent='API unavailable'}}
+function show(data){let out=document.getElementById('output');out.className='result';out.textContent=
+`Incident: ${data.incident_id}\nService: ${data.service} | Severity: ${data.severity}\nMode: ${data.mode.toUpperCase()} (${data.provider})\n\nSUMMARY\n${data.summary}\n\nPROBABLE ROOT CAUSE\n${data.probable_root_cause}\nConfidence: ${(data.confidence*100).toFixed(0)}%\n\nEVIDENCE\n${data.evidence.map(x=>'• '+x).join('\n')}\n\nSUGGESTED REMEDIATION\n${data.remediation.map((x,i)=>(i+1)+'. '+x).join('\n')}\n\nSTATUS: ${data.status} — no changes executed.`}
+async function request(url,opts){let out=document.getElementById('output');out.textContent='Investigating…';try{let r=await fetch(url,opts);let j=await r.json();if(!r.ok)throw Error(j.detail||JSON.stringify(j));show(j)}catch(e){out.className='result error';out.textContent='Request failed: '+e.message}}
+function demo(s){request('/incidents/demo/'+s)}
+function custom(){let metrics;try{metrics=JSON.parse(document.getElementById('metrics').value)}catch(e){alert('Metrics must be valid JSON');return}
+request('/incidents/investigate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({service:document.getElementById('service').value,severity:document.getElementById('severity').value,description:document.getElementById('description').value,logs:document.getElementById('logs').value.split('\n').filter(Boolean),metrics})})}
+check();
+</script></main></body></html>

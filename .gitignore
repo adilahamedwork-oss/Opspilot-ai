@@ -1,0 +1,24 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+reports/*
+!.gitkeep
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+*.backup
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python environments and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
